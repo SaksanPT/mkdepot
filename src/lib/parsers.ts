@@ -168,6 +168,13 @@ export interface ItemRow {
   units_per_case: number
   is_booster: boolean
   template_descr: string | null
+  /** VENDOR NAME — ใช้แยกการสั่ง Shipto ตามผู้ผลิต (เชฟรอน / มิราเคิล) */
+  vendor_name: string | null
+  vendor_code: string | null
+  /** Status DC — ACT / DEL / New · DEL ไม่ถูกนำไปสั่ง Shipto */
+  status_dc: string | null
+  /** OIL TYPE — BENZENE / DIESEL */
+  oil_type: string | null
 }
 
 export function parseMasterItem(grid: Grid): ParseResult<ItemRow> {
@@ -178,7 +185,11 @@ export function parseMasterItem(grid: Grid): ParseResult<ItemRow> {
     en: c('DESC'), th: c('DESC (TH)'),
     litre: need(c('LITRE'), 'LITRE'),
     pack: c('PACK SIZE'), uom: c('UOM'), perCase: c('หน่วยโอน'),
+    vName: c('VENDOR NAME'), vCode: c('VENDOR CODE'),
+    statusDc: c('Status DC'), oilType: c('OIL TYPE'),
   }
+  const txt = (row: unknown[], k: number) =>
+    k >= 0 ? String(row[k] ?? '').trim().replace(/\.0$/, '') || null : null
   const out = new Map<string, ItemRow>()
   const warnings: string[] = []
   let skipped = 0
@@ -203,6 +214,10 @@ export function parseMasterItem(grid: Grid): ParseResult<ItemRow> {
       units_per_case: perCase > 0 ? perCase : 1,
       is_booster: /booster|หัวเชื้อ/i.test(`${en ?? ''} ${th ?? ''}`),
       template_descr: th ?? en,
+      vendor_name: txt(row, i.vName),
+      vendor_code: txt(row, i.vCode),
+      status_dc: txt(row, i.statusDc)?.toUpperCase() ?? null,
+      oil_type: txt(row, i.oilType),
     })
   }
   return { rows: [...out.values()], skipped, warnings }
