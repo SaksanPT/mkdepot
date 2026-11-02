@@ -13,7 +13,7 @@ interface Vendor {
   id: number; vendor_name: string; short_name: string
   min_litre: number | null; min_cases: number | null; full_case: boolean
   lead_min: number; lead_max: number; doh_max: number
-  cycle_days: number; order_dows: number[]; active: boolean; sort: number
+  cycle_days: number; order_dows: number[]; classes: string[]; active: boolean; sort: number
 }
 
 interface PLine {
@@ -284,8 +284,8 @@ export default function Shipto() {
     <>
       <h2>Shipto — สั่งตรงจากผู้ผลิต</h2>
       <p className="lede">
-        น้ำมันเครื่องที่ผู้ผลิตส่งตรงถึงสถานี แยกตาม VENDOR NAME ใน Master Item ·
-        ระบบเลือกสถานีที่ของจะหมดก่อนของรอบหน้ามาถึง ปัดเต็มลัง แล้วเติมให้ถึงขั้นต่ำ ·
+        น้ำมันเครื่องและหัวเชื้อที่ผู้ผลิตส่งตรงถึงสถานี แยกตาม VENDOR NAME ใน Master Item ·
+        ระบบเลือกสถานีที่ของ (เฉพาะคลาสที่กำหนด) จะหมดก่อนของรอบหน้ามาถึง ปัดเต็มลัง แล้วเติมให้ถึงขั้นต่ำ ·
         ยืนยันแล้วขึ้น <strong>รอจัดส่ง</strong> และถูกนับเป็นของกำลังมาในการคำนวณเติมปกติทันที
       </p>
 
@@ -304,6 +304,7 @@ export default function Shipto() {
             <div>
               <h3 style={{ marginBottom: 6 }}>{vendor.vendor_name}</h3>
               <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+                <span className="tag ok">เฉพาะ {(vendor.classes ?? []).join(' · ') || 'ไม่ได้เลือกคลาส'}</span>
                 <span className="tag">ขั้นต่ำต่อสถานี {minText}</span>
                 {vendor.full_case && <span className="tag">เต็มลัง ไม่แตกลัง</span>}
                 <span className="tag">ส่งของ {vendor.lead_min}–{vendor.lead_max} วัน</span>
@@ -661,10 +662,11 @@ function RulesEditor({ vendor, onSaved }: { vendor: Vendor; onSaved: (v: Vendor)
   async function save() {
     setNote('')
     if (f.lead_max < f.lead_min) { setNote('ส่งช้าสุดต้องไม่น้อยกว่าส่งเร็วสุด'); return }
+    if (!f.classes?.length) { setNote('ต้องเลือกอย่างน้อย 1 คลาส'); return }
     const { data, error } = await supabase.from('shipto_vendors').update({
       min_litre: f.min_litre, min_cases: f.min_cases, full_case: f.full_case,
       lead_min: f.lead_min, lead_max: f.lead_max, doh_max: f.doh_max,
-      cycle_days: f.cycle_days, order_dows: f.order_dows,
+      cycle_days: f.cycle_days, order_dows: f.order_dows, classes: f.classes,
     }).eq('id', f.id).select()
     if (error) { setNote(error.message); return }
     if (!data || data.length === 0) { setNote('บันทึกไม่ได้ — ต้องเป็นผู้ดูแลระบบ (admin)'); return }
@@ -700,6 +702,24 @@ function RulesEditor({ vendor, onSaved }: { vendor: Vendor; onSaved: (v: Vendor)
             {DOW[d]}
           </label>
         ))}
+      </div>
+      <div className="row" style={{ gap: 14, marginTop: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>สั่งเฉพาะคลาส:</span>
+        {['Class A', 'Class B', 'Class C'].map((c) => (
+          <label key={c} className="row" style={{ gap: 4, fontSize: 13 }}>
+            <input type="checkbox" checked={(f.classes ?? []).includes(c)}
+              onChange={(e) => setF({
+                ...f,
+                classes: e.target.checked
+                  ? [...(f.classes ?? []), c].sort()
+                  : (f.classes ?? []).filter((x) => x !== c),
+              })} />
+            {c}
+          </label>
+        ))}
+        <span className="hint" style={{ margin: 0 }}>
+          คลาสอื่นไม่ถูกสั่ง แต่ของที่มีอยู่ยังนับใน DOH สถานี
+        </span>
       </div>
       <div className="row" style={{ gap: 10, marginTop: 12 }}>
         <button className="btn" onClick={save}>บันทึกเงื่อนไข</button>
