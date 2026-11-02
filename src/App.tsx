@@ -10,6 +10,7 @@ import Run from './views/Run'
 import Transfers from './views/Transfers'
 import TransfersB from './views/TransfersB'
 import ManualTransfer from './views/ManualTransfer'
+import Shipto from './views/Shipto'
 import Depot from './views/Depot'
 import Receiving from './views/Receiving'
 import Shortage from './views/Shortage'
@@ -45,7 +46,7 @@ function saveTab(tab: string, back: boolean) {
 type VTDoc = Document & {
   startViewTransition?: (cb: () => void) => { finished: Promise<void> }
 }
-type Tab = 'home' | 'daily' | 'import' | 'run' | 'transfer' | 'transferB' | 'manual' | 'receiving'
+type Tab = 'home' | 'daily' | 'import' | 'run' | 'transfer' | 'transferB' | 'manual' | 'shipto' | 'receiving'
   | 'shortage' | 'classprep' | 'groups' | 'depot' | 'kpi' | 'settings' | 'users'
 
 /** ตัวกรองที่ส่งข้ามหน้าได้ เช่นกดตัวเลขในหน้าภาพรวมแล้วเด้งไปหน้าของขาด */
@@ -145,6 +146,7 @@ export default function App() {
         { id: 'transfer', step: '3', label: 'โอนเกลี่ยสินค้า' },
         { id: 'transferB', step: '4', label: 'โอนข้ามคลาส' },
         { id: 'manual', label: 'โอนกำหนดเอง' },
+        { id: 'shipto', label: 'Shipto สั่งตรง' },
       ],
     },
     {
@@ -178,6 +180,7 @@ export default function App() {
     transfer: <path d="M7 7h11l-3-3m3 13H7l3 3" />,
     transferB: <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z M4 8.5 12 13l8-4.5M12 13v7" />,
     manual: <path d="M12 5v14M5 12h14" />,
+    shipto: <><path d="M3.5 7.5 9 5l5.5 2.5v6L9 16l-5.5-2.5z M3.5 7.5 9 10l5.5-2.5M9 10v6" /><path d="M15 17h6m0 0-2.5-2.5M21 17l-2.5 2.5" /></>,
     shortage: <path d="M12 8v5m0 3.5h.01M10.3 3.9 2.6 17.1A1.6 1.6 0 0 0 4 19.5h16a1.6 1.6 0 0 0 1.4-2.4L13.7 3.9a1.6 1.6 0 0 0-2.8 0Z" />,
     receiving: <><path d="M3 7h10v9H3zM13 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></>,
     depot: <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5z M4 8.5 12 13l8-4.5M12 13v7" />,
@@ -277,6 +280,7 @@ export default function App() {
           {tab === 'transfer' && <Transfers snapshotDate={snapshotDate} />}
           {tab === 'transferB' && <TransfersB snapshotDate={snapshotDate} />}
           {tab === 'manual' && <ManualTransfer />}
+          {tab === 'shipto' && <Shipto />}
           {tab === 'shortage' && <Shortage preset={preset} />}
           {tab === 'receiving' && <Receiving />}
           {tab === 'depot' && <Depot />}
