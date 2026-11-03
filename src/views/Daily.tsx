@@ -49,10 +49,24 @@ export default function Daily({ snapshotDate, setSnapshotDate, go }: {
 }) {
   const [ready, setReady] = useState<Ready>({})
   const [sum, setSum] = useState<Sum | null>(null)
+  const [ship, setShip] = useState<{ pending: number; orderDay: boolean }>({ pending: 0, orderDay: false })
 
   useEffect(() => { void check() }, [snapshotDate])
   useEffect(() => {
     supabase.rpc('dashboard_summary').then(({ data }) => setSum((data as Sum) ?? null))
+    // Shipto: ใบที่รอออก PO และวันนี้เป็นวันสั่งของผู้ผลิตรายไหนหรือไม่
+    void (async () => {
+      const d = new Date().getDay()
+      const dow = d === 0 ? 7 : d
+      const [o, v] = await Promise.all([
+        supabase.from('shipto_orders').select('id', { count: 'exact', head: true }).eq('status', 'รอจัดส่ง'),
+        supabase.from('shipto_vendors').select('order_dows').eq('active', true),
+      ])
+      setShip({
+        pending: o.count ?? 0,
+        orderDay: ((v.data ?? []) as { order_dows: number[] }[]).some((r) => r.order_dows?.includes(dow)),
+      })
+    })()
   }, [])
 
   async function check() {
@@ -106,9 +120,12 @@ export default function Daily({ snapshotDate, setSnapshotDate, go }: {
       pillTone: short > 0 ? 'hot' : 'ok',
     },
     {
-      tab: 'receiving', tone: 'g-amber', a: P.truck, b: P.clock,
-      title: 'ยังไม่ได้ทำรับ',
-      desc: 'เทียบใบสั่งซื้อที่ค้างใน ME2N กับของที่ระบบสาขาเห็น หาของที่ตกค้างระหว่างทาง',
+      tab: 'shipto', tone: 'g-amber', a: P.box, b: P.truck,
+      title: 'Shipto สั่งตรง',
+      desc: 'สั่งน้ำมันเครื่องและหัวเชื้อตรงจากผู้ผลิตส่งถึงสถานี เชฟรอน · มิราเคิล สั่งทุกจันทร์ อังคาร',
+      pill: ship.pending > 0 ? `รอออก PO ${ship.pending} ใบ`
+        : ship.orderDay ? 'วันนี้วันสั่ง' : 'ไม่มีค้าง',
+      pillTone: ship.pending > 0 ? 'warn' : ship.orderDay ? 'hot' : 'ok',
     },
     {
       tab: 'depot', tone: 'g-teal', a: P.box, b: P.chart,
