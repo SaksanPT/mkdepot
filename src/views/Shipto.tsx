@@ -285,7 +285,7 @@ export default function Shipto() {
       <h2>Shipto — สั่งตรงจากผู้ผลิต</h2>
       <p className="lede">
         น้ำมันเครื่องและหัวเชื้อที่ผู้ผลิตส่งตรงถึงสถานี แยกตาม VENDOR NAME ใน Master Item ·
-        ระบบเลือกสถานีที่ของ (เฉพาะคลาสที่กำหนด) จะหมดก่อนของรอบหน้ามาถึง ปัดเต็มลัง แล้วเติมให้ถึงขั้นต่ำ ·
+        ระบบเลือกสถานีที่ของ (น้ำมันเครื่องเฉพาะคลาสที่กำหนด หัวเชื้อทุกคลาส) จะหมดก่อนของรอบหน้ามาถึง ปัดเต็มลัง แล้วเติมให้ถึงขั้นต่ำ ·
         ยืนยันแล้วขึ้น <strong>รอจัดส่ง</strong> และถูกนับเป็นของกำลังมาในการคำนวณเติมปกติทันที
       </p>
 
@@ -304,7 +304,7 @@ export default function Shipto() {
             <div>
               <h3 style={{ marginBottom: 6 }}>{vendor.vendor_name}</h3>
               <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                <span className="tag ok">เฉพาะ {(vendor.classes ?? []).join(' · ') || 'ไม่ได้เลือกคลาส'}</span>
+                <span className="tag ok">น้ำมันเครื่องเฉพาะ {(vendor.classes ?? []).join(' · ') || 'ไม่ได้เลือกคลาส'} · หัวเชื้อทุกคลาส</span>
                 <span className="tag">ขั้นต่ำต่อสถานี {minText}</span>
                 {vendor.full_case && <span className="tag">เต็มลัง ไม่แตกลัง</span>}
                 <span className="tag">ส่งของ {vendor.lead_min}–{vendor.lead_max} วัน</span>
@@ -401,7 +401,15 @@ export default function Shipto() {
                           <div className="hint" style={{ margin: 0 }}>{o.plant_code}</div>
                         </td>
                         <td style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>
-                          {o.shipto_lines.map((l) => `${lineName(l)} ×${n0(l.cases)}`).join(' · ')}
+                          {o.shipto_lines.map((l) => (
+                            <div key={l.mat_code}
+                              style={{ display: 'flex', justifyContent: 'space-between', gap: 12, lineHeight: 1.6 }}>
+                              <span>{lineName(l)}</span>
+                              <span style={{ whiteSpace: 'nowrap', color: 'var(--ink-1, inherit)' }}>
+                                <strong>{n0(l.cases)}</strong> ลัง
+                              </span>
+                            </div>
+                          ))}
                         </td>
                         <td className="num"><strong>{n0(o.total_cases)}</strong></td>
                         <td className="num">{n0(o.total_litre)}</td>
@@ -718,7 +726,7 @@ function RulesEditor({ vendor, onSaved }: { vendor: Vendor; onSaved: (v: Vendor)
           </label>
         ))}
         <span className="hint" style={{ margin: 0 }}>
-          คลาสอื่นไม่ถูกสั่ง แต่ของที่มีอยู่ยังนับใน DOH สถานี
+          ใช้กับน้ำมันเครื่อง · หัวเชื้อสั่งได้ทุกคลาส · คลาสอื่นไม่ถูกสั่ง แต่ของที่มีอยู่ยังนับใน DOH สถานี
         </span>
       </div>
       <div className="row" style={{ gap: 10, marginTop: 12 }}>
